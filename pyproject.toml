@@ -1,19 +1,24 @@
 [project]
-name = "marimo-link"
-version = "0.1.0"
-description = "Add your description here"
+name = "marimo-anywhere"
+version = "2015.12.1"
+description = "Small CLI application for minifying Marimo Notebooks"
 readme = "README.md"
 authors = [
-    { name = "Daniel Engvall", email = "daniel.engvall@amelia.com" }
+    { name = "Daniel Engvall", email = "daniel@engvalls.eu" }
 ]
 requires-python = ">=3.13"
 dependencies = [
     "cyclopts>=4.3.0",
+    "install-playwright>=0.1.1",
+    "loguru>=0.7.3",
+    "platformdirs>=4.5.1",
+    "playwright>=1.57.0",
+    "pyperclip>=1.11.0",
     "python-minifier>=3.1.0",
 ]
 
 [project.scripts]
-marimo-link = "marimo_link.cli:cli_app"
+marimo-anywhere = "marimo_anywhere.cli:cli_app"
 
 [build-system]
 requires = ["uv_build>=0.9.7,<0.10.0"]

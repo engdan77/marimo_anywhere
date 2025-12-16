@@ -1,22 +1,35 @@
 import re
 import textwrap
-from typing import Iterable, Any, Generator, LiteralString
-from python_minifier import minify
+from typing import Generator, LiteralString, Annotated
+from uuid import uuid4
+
+import platformdirs
+from python_minifier import minify as code_minify
 from cyclopts import App
 from pathlib import Path
 import ast
-import logging
+from loguru import logger
 
-logging.basicConfig(level=logging.DEBUG, format='%(message)s')
-logger = logging.getLogger(__name__)
+from marimo_anywhere.web import get_marimo_url
 
 cli_app = App()
 
 
 def format_return_statements_to_single_line(code: str) -> str:
     """
-    Adjusts all multi-line return statements in the given Python code
-    so that they span a single line.
+    Reformats multi-line `return` statements containing tuples or lists into a single-line format
+    while preserving their structure and readability.
+
+    This function identifies multi-line `return` statements, particularly those that span
+    multiple lines due to tuples or lists, and converts them into a single-line equivalent.
+    Unnecessary newlines and excessive spaces are removed, ensuring concise and consistent
+    output without altering the semantics of the code.
+
+    :param code: The source code as a string to process for formatting multi-line `return` statements.
+    :type code: str
+
+    :return: A string with all multi-line `return` statements reformatted into single-line statements.
+    :rtype: str
     """
     # Matches return statements with multi-line tuples or lists
     return_pattern = re.compile(
@@ -37,8 +50,15 @@ def format_return_statements_to_single_line(code: str) -> str:
 
 def format_function_declarations_to_single_line(code: str) -> str:
     """
-    Adjusts all multi-line function signatures in the given Python code
-    so that they span a single line.
+    Reformats multi-line Python function declarations in the provided code into a single-line format.
+    This function identifies all function definitions with arguments spread across multiple lines
+    and converts them into a compact single-line representation while preserving the original
+    spacing around the arguments.
+
+    :param code: The Python code to be processed as a string.
+    :type code: str
+    :return: The reformatted code with function declarations updated to single-line format.
+    :rtype: str
     """
     # Matches function definitions and captures the multi-line arguments
     function_pattern = re.compile(
@@ -64,7 +84,21 @@ def new_lines(code_lines: list):
 
 
 def yield_next_function_block(source_code: str) -> Generator[tuple[LiteralString, LiteralString], None, None]:
-    """Parse through source code and yield function blocks."""
+    """
+    Yields the next block of source code function definitions and their respective
+    return statement blocks from the given source code. The function transforms
+    multi-line function declarations and return statements into single lines for
+    easier processing before parsing them and separating blocks.
+
+    :param source_code: The complete source code as a string to be analyzed and
+        split into function blocks and return statement blocks.
+    :type source_code: str
+    :return: A generator yielding tuples, where the first element represents the lines
+        of code before the function definition, and the second element represents
+        the lines containing the function itself and associated return statement
+        lines.
+    :rtype: Generator[tuple[LiteralString, LiteralString], None, None]
+    """
     formatted_source_code = format_function_declarations_to_single_line(source_code)
     formatted_source_code = format_return_statements_to_single_line(formatted_source_code)
     org_souce_code: list = formatted_source_code.split('\n')
@@ -89,9 +123,19 @@ def yield_next_function_block(source_code: str) -> Generator[tuple[LiteralString
             yield return_bef, return_aft
 
 
-
 def mini(source_code):
-    result = minify(source=source_code,
+    """
+    Minifies the given Python source code to reduce size while preserving its
+    functionality. The function applies optimization techniques such as
+    constant folding, local variable renaming, and removal of unnecessary
+    `None` returns.
+
+    :param source_code: The input Python source code as a string.
+    :type source_code: str
+    :return: Optimized and minified Python source code as a string.
+    :rtype: str
+    """
+    result = code_minify(source=source_code,
                     filename='tmp.py',
                     rename_globals=False,
                     combine_imports=False,
@@ -102,8 +146,12 @@ def mini(source_code):
     return result
 
 
-@cli_app.default()
-def minify_marimo(input_marimo_file: Path, output_marimo_file: Path, whitelist_expression: list[str] = None):
+def random_name(suffix: str = "") -> str:
+    return f"{uuid4().hex}.{suffix}"
+
+
+@cli_app.command()
+def minify_to_file(input_marimo_file: Path, output_marimo_file: Path | None, whitelist_expression: list[str] = None) -> Annotated[Path, 'output_marimo_file']:
     """Minify a Marimo source file while preserving its behavior.
 
     Reads `input_marimo_file`, minifies eligible code blocks, and writes the result
@@ -119,6 +167,11 @@ def minify_marimo(input_marimo_file: Path, output_marimo_file: Path, whitelist_e
     Returns:
         None. The minified code is written to `output_marimo_file`.
     """
+
+    if not output_marimo_file:
+        temp_dir = platformdirs.user_cache_dir('marimo_anywhere')
+        temp_fn = random_name('.py')
+        output_marimo_file = Path(temp_dir) / temp_fn
 
     org_size = input_marimo_file.stat().st_size
     with output_marimo_file.open('w') as f:
@@ -155,7 +208,25 @@ if __name__ == "__main__":
 ''')
     new_size = output_marimo_file.stat().st_size
     logger.info(f'Writing output to {output_marimo_file.as_posix()} {1 - (new_size/org_size):.2%} smaller than original.')
-    # Path('out.py').write_text(result)
+    return output_marimo_file
+
+
+@cli_app.command()
+def minify_to_url(input_marimo_file: Path, whitelist_expression: list[str] = None):
+    """
+    Minifies the given Marimo file to a reduced version based on the whitelist
+    expression and converts it to a shareable Marimo URL.
+
+    :param input_marimo_file: Path to the input Marimo configuration file to be minified.
+    :type input_marimo_file: Path
+    :param whitelist_expression: A list of expressions to whitelist during the minification
+        process. Optional.
+    :type whitelist_expression: list[str] | None
+    :return: A string representing the URL of the minified Marimo configuration file.
+    :rtype: str
+    """
+    minified_file = minify_to_file(input_marimo_file, whitelist_expression=whitelist_expression)
+    get_marimo_url(minified_file.as_posix())
 
 
 def main():
