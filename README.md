@@ -11,7 +11,7 @@ It focuses on practical workflows like:
 
 This repository is intentionally lightweight and aims to provide composable utilities you can wire into your own workflow.
 
-## Usage
+## Usage (no installation required)
 
 ```shell
 $ uvx --from https://github.com/engdan77/marimo_anywhere.git marimo-anywhere --help
@@ -24,4 +24,10 @@ Usage: marimo-anywhere COMMAND
 │ --help (-h)     Display this message and exit.                                                   │
 │ --version       Display application version.                                                     │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+```
+
+## Install as a tool using UV package manager
+
+```shell
+$ uv tool install https://github.com/engdan77/marimo_anywhere.git
 ```
