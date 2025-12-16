@@ -103,8 +103,22 @@ def mini(source_code):
 
 
 @cli_app.default()
-def minify_marimo(input_marimo_file: Path, output_marimo_file: Path):
-    """Convert marimo code to a smaller size."""
+def minify_marimo(input_marimo_file: Path, output_marimo_file: Path, whitelist_expression: list[str] = None):
+    """Minify a Marimo source file while preserving its behavior.
+
+    Reads `input_marimo_file`, minifies eligible code blocks, and writes the result
+    to `output_marimo_file`. You can optionally provide expressions to exclude from
+    minimization.
+
+    Args:
+        input_marimo_file: Path to the input Marimo source file.
+        output_marimo_file: Path where the minified output will be written.
+        whitelist_expression: Expressions to exclude from minimization, supports regex. If `None`,
+            no expressions are whitelisted.
+
+    Returns:
+        None. The minified code is written to `output_marimo_file`.
+    """
 
     org_size = input_marimo_file.stat().st_size
     with output_marimo_file.open('w') as f:
@@ -112,23 +126,27 @@ def minify_marimo(input_marimo_file: Path, output_marimo_file: Path):
         counter = 0
         for before_func, in_func in list(yield_next_function_block(source_code)):
             counter += 1
-            # print(f'{counter:=^20}')
-            # print(before_func)
-            # print(in_func)
-            block_dedent = textwrap.dedent(in_func)
-            try:
-                mini_dedent = mini(block_dedent)
-            except IndentationError as e:
-                msg = f'Error within this block: {e}'
-                print(f"{msg:=^240}")
-                print(block_dedent)
-                print('HINT: Ensure functions explicitly returns, e.g. return None')
-                raise SystemExit(1)
-            mini_indent = textwrap.indent(mini_dedent, prefix='    ')
-            # print(before_func)
-            # print(mini_indent)
+            output_code_block = in_func
+            if whitelist_expression is not None:
+                block_dedent = textwrap.dedent(in_func)
+                for expr in whitelist_expression:
+                    found = re.match(expr, block_dedent, re.DOTALL | re.IGNORECASE)
+                    if found:
+                        logger.info(f'Whitelisted expression found in block {counter}: {expr}')
+                        break
+                else:
+                    try:
+                        mini_dedent = mini(block_dedent)
+                    except IndentationError as e:
+                        msg = f'Error within this block: {e}'
+                        print(f"{msg:=^240}")
+                        print(block_dedent)
+                        print('HINT: Ensure functions explicitly returns, e.g. return None')
+                        raise SystemExit(1)
+                    mini_indent = textwrap.indent(mini_dedent, prefix='    ')
+                    output_code_block = mini_indent
             f.write(f'\n{before_func}')
-            f.write(f'\n{mini_indent}')
+            f.write(f'\n{output_code_block}')
         f.write('''    return
 
 
