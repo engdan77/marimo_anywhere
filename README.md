@@ -1,4 +1,4 @@
-# Marimo Anywhere
+# 📒 Marimo Anywhere 🕸️
 
 Marimo Anywhere is a small toolkit for "minifying" **Marimo** notebooks from the command line and scripts to allow sharing them easily and within limitations that exists share embedded/encoded code within URL.
 
@@ -13,3 +13,15 @@ This repository is intentionally lightweight and aims to provide composable util
 
 ## Usage
 
+```shell
+$ uvx --from https://github.com/engdan77/marimo_anywhere.git marimo-anywhere --help
+Usage: marimo-anywhere COMMAND
+
+╭─ Commands ───────────────────────────────────────────────────────────────────────────────────────╮
+│ minify-to-file  Minify a Marimo source file while preserving its behavior.                       │
+│ minify-to-url   Minifies the given Marimo file to a reduced version based on the whitelist       │
+│                 expression and converts it to a shareable Marimo URL.                            │
+│ --help (-h)     Display this message and exit.                                                   │
+│ --version       Display application version.                                                     │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+```
