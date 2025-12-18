@@ -173,6 +173,7 @@ def minify_to_file(input_marimo_file: Path, output_marimo_file: Path | None = No
         temp_fn = random_name('py')
         output_marimo_file = Path(temp_dir) / temp_fn
 
+    output_marimo_file.mkdir(parents=True, exist_ok=True)
     org_size = input_marimo_file.stat().st_size
     with output_marimo_file.open('w') as f:
         source_code = input_marimo_file.read_text()
