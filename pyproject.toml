@@ -1,6 +1,6 @@
 [project]
 name = "marimo-anywhere"
-version = "2015.12.1"
+version = "2015.12.2"
 description = "Small CLI application for minifying Marimo Notebooks"
 readme = "README.md"
 authors = [

@@ -151,7 +151,7 @@ def random_name(suffix: str = "") -> str:
 
 
 @cli_app.command()
-def minify_to_file(input_marimo_file: Path, output_marimo_file: Path | None, whitelist_expression: list[str] = None) -> Annotated[Path, 'output_marimo_file']:
+def minify_to_file(input_marimo_file: Path, output_marimo_file: Path | None = None, whitelist_expression: list[str] = None) -> Annotated[Path, 'output_marimo_file']:
     """Minify a Marimo source file while preserving its behavior.
 
     Reads `input_marimo_file`, minifies eligible code blocks, and writes the result
