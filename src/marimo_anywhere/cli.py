@@ -201,7 +201,7 @@ def minify_to_file(input_marimo_file: Path, output_marimo_file: Path | None = No
                     output_code_block = mini_indent
             f.write(f'\n{before_func}')
             f.write(f'\n{output_code_block}')
-        f.write('''    return
+        f.write('''\n    return
 
 
 if __name__ == "__main__":

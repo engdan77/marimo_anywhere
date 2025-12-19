@@ -162,5 +162,5 @@ def get_marimo_url(input_marimo_file_path: str) -> str:
     logger.info(f'Copying updated URL to clipboard: {updated_url}')
     pyperclip.copy(updated_url)
     current_url_size = len(url.encode("utf-8"))
-    logger.info(f"URL size: {current_url_size} bytes {current_url_size / MARIMO_MAX_SIZE:.2%} of max size")
+    logger.info(f"URL size: {current_url_size} bytes {current_url_size / MARIMO_MAX_SIZE:.2%} of max size (?) of {MARIMO_MAX_SIZE} bytes")
     return updated_url
